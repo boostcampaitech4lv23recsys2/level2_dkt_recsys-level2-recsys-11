@@ -16,6 +16,9 @@ class Preprocess:
         self.train_data = None
         self.test_data = None
 
+        # categorical columns
+        self.cate_cols = ["answerCode", "assessmentItemID", "testId", "KnowledgeTag"] # args.cate_cols
+
     def get_train_data(self):
         return self.train_data
 
@@ -46,27 +49,64 @@ class Preprocess:
         if not os.path.exists(self.args.asset_dir):
             os.makedirs(self.args.asset_dir)
 
-        for col in cate_cols:
+        # Label encoder
+        # for col in cate_cols:
 
-            le = LabelEncoder()
-            if is_train:
-                # For UNKNOWN class
-                a = df[col].unique().tolist() + ["unknown"]
-                le.fit(a)
-                self.__save_labels(le, col)
-            else:
-                label_path = os.path.join(self.args.asset_dir, col + "_classes.npy")
-                le.classes_ = np.load(label_path)
+        #     le = LabelEncoder()
+        #     if is_train:
+        #         # For UNKNOWN class
+        #         a = df[col].unique().tolist() + ["unknown"]
+        #         le.fit(a)
+        #         self.__save_labels(le, col)
+        #     else:
+        #         label_path = os.path.join(self.args.asset_dir, col + "_classes.npy")
+        #         le.classes_ = np.load(label_path)
 
-                df[col] = df[col].apply(
-                    lambda x: x if str(x) in le.classes_ else "unknown"
-                )
+        #         df[col] = df[col].apply(
+        #             lambda x: x if str(x) in le.classes_ else "unknown"
+        #         )
 
-            # 모든 컬럼이 범주형이라고 가정
-            df[col] = df[col].astype(str)
-            test = le.transform(df[col])
-            df[col] = test
+        #     # 모든 컬럼이 범주형이라고 가정
+        #     df[col] = df[col].astype(str)
+        #     test = le.transform(df[col])
+        #     df[col] = test
 
+        ### Change categorical column names
+        # new_names = {name:name+'C_' for name in self.cate_cols}
+        # df.rename(new_names, axis=1, inplace=True)
+
+        # C_cate_cols = [name for name in df.columns if name[:2]=='C_']
+
+        ### Offset        
+        mappers_dict = {}
+
+        # nan 값이 0이므로 위해 offset은 1에서 출발한다
+        cate_offset = 1
+
+        for col in self.cate_cols:
+            
+            # 각 column마다 mapper를 만든다
+            cate2idx = {}
+            for v in df[col].unique():
+
+                # nan 및 None은 넘기는 코드
+                if (v != v) | (v == None):
+                    continue
+
+                # offset 추가 - cumulative sum
+                cate2idx[v] = len(cate2idx) + cate_offset 
+
+            mappers_dict[col] = cate2idx 
+
+            # mapping
+            df[col] = df[col].map(cate2idx).fillna(0).astype(int)
+
+            # offset 추가 - cumulative sum 
+            cate_offset += len(cate2idx)
+
+        self.args.cate_offset = cate_offset
+
+        
         def convert_time(s):
             timestamp = time.mktime(
                 datetime.strptime(s, "%Y-%m-%d %H:%M:%S").timetuple()
@@ -89,27 +129,30 @@ class Preprocess:
 
         # 추후 feature를 embedding할 시에 embedding_layer의 input 크기를 결정할때 사용
 
-        self.args.n_questions = len(
-            np.load(os.path.join(self.args.asset_dir, "assessmentItemID_classes.npy"))
-        )
-        self.args.n_test = len(
-            np.load(os.path.join(self.args.asset_dir, "testId_classes.npy"))
-        )
-        self.args.n_tag = len(
-            np.load(os.path.join(self.args.asset_dir, "KnowledgeTag_classes.npy"))
-        )
+        # self.args.n_questions = len(
+        #     np.load(os.path.join(self.args.asset_dir, "assessmentItemID_classes.npy"))
+        # )
+        # self.args.n_test = len(
+        #     np.load(os.path.join(self.args.asset_dir, "testId_classes.npy"))
+        # )
+        # self.args.n_tag = len(
+        #     np.load(os.path.join(self.args.asset_dir, "KnowledgeTag_classes.npy"))
+        # )
 
         df = df.sort_values(by=["userID", "Timestamp"], axis=0)
-        columns = ["userID", "assessmentItemID", "testId", "answerCode", "KnowledgeTag"]
+        # columns = ["userID", "assessmentItemID", "testId", "answerCode", "KnowledgeTag"]
+        feat_columns = [col for col in df.columns if col not in ("userID", "Timestamp")]
+        columns = ['userID'] + feat_columns
         group = (
             df[columns]
             .groupby("userID")
             .apply(
                 lambda r: (
-                    r["testId"].values,
-                    r["assessmentItemID"].values,
-                    r["KnowledgeTag"].values,
-                    r["answerCode"].values,
+                    r[name].values for name in feat_columns
+                    # r["testId"].values,
+                    # r["assessmentItemID"].values,
+                    # r["KnowledgeTag"].values,
+                    # r["answerCode"].values,
                 )
             )
         )

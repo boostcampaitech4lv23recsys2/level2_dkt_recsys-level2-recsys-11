@@ -67,6 +67,11 @@ def parse_args():
         "--scheduler", default="plateau", type=str, help="scheduler type"
     )
 
+    # Embedding 
+    # parser.add_argument("--cate_cols", nargs='+', default=["answerCode", "assessmentItemID", "testId", "KnowledgeTag"], 
+    #                       type=lambda s: [col for col in s.split(',')], help="categorical column names")
+    parser.add_argument("--emb_size", default=100, type=int, help="embedding dimension")
+
     args = parser.parse_args()
 
     return args
