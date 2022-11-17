@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import lightning as pl
 
 try:
     from transformers.modeling_bert import BertConfig, BertEncoder, BertModel
@@ -68,7 +69,7 @@ class LSTM(nn.Module):
         return out
 
 
-class LSTMATTN(nn.Module):
+class LSTMATTN(pl.LightningModule):
     def __init__(self, args):
         super(LSTMATTN, self).__init__()
         self.args = args
@@ -149,7 +150,7 @@ class LSTMATTN(nn.Module):
         return out
 
 
-class Bert(nn.Module):
+class Bert(pl.LightningModule):
     def __init__(self, args):
         super(Bert, self).__init__()
         self.args = args

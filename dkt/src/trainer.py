@@ -3,6 +3,7 @@ import os
 
 import torch
 import wandb
+import lightning as pl
 
 from .criterion import get_criterion
 from .dataloader import get_loaders
