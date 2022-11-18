@@ -20,7 +20,7 @@ class DktLightning(pl.LightningModule):
         self.auroc = torchmetrics.AUROC(num_classes=3) # 왜 3개일까?
         
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=1e-3)
+        return torch.optim.Adam(self.parameters(), lr=1e-4)
     
     def forward(self, x):
         return self.model(x)
