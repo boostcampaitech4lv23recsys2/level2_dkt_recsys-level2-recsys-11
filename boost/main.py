@@ -22,12 +22,10 @@ import lightgbm as lgb
 
 
 def main(args):
-
-
     args.time_info = (datetime.datetime.today() + datetime.timedelta(hours=9)).strftime('%m%d_%H%M')
     setSeeds(args.seed)
     if args.wandb:
-        wandb.init(entity='mkdir', project='kdg_cat_test', name=f'{args.model}_{args.fe_num}_{args.time_info}')
+        wandb.init(entity='mkdir', project='sj_cat_test', name=f'{args.model}_{args.fe_num}_{args.time_info}')
         wandb.config.update(args)
 
 
@@ -94,23 +92,17 @@ def main(args):
                 w.write('{},{}\n'.format(id,p))
         raise RuntimeError
 
-    else:
+    else: ## no cv only one valid set
         X_train, X_valid, y_train, y_valid = data_split(train_data, args.ratio)
 
         model = get_model(args)
-        if args.model == 'CATB':
-            model.fit(X_train, y_train,
-                eval_set=(X_valid, y_valid),
-                cat_features=['userID'] + cate_cols,
-                early_stopping_rounds= 10,
-                use_best_model=True,
-                )
-        elif args.model == 'LGB':
 
-            model.fit(X_train, y_train,
-                eval_set=(X_valid, y_valid),
-                early_stopping_rounds= 10,
-                )
+        model.fit(X_train, y_train,
+            eval_set=(X_valid, y_valid),
+            cat_features=['userID'] + cate_cols,
+            # early_stopping_rounds= 10,
+            use_best_model=True,
+            )
 
         predicts = model.predict_proba(test_data)
         print(predicts.shape)
@@ -129,7 +121,7 @@ def main(args):
         plt.yticks(range(len(sorted_idx)), np.array(test_data.columns)[sorted_idx])
         plt.title('Feature Importance')
         plt.show()
-        plt.savefig('Test.pdf')
+        plt.savefig('Test.png')
 
 
         # SAVE
@@ -152,10 +144,11 @@ def main(args):
         wandb.define_metric("metric", step_metric="epochs")
 
         for i in out.iter:
-            epoch, metric, _ = out.loc[i]
+            epoch, log_loss, val_auc = out.loc[i]
             log_dict = {
             "epochs": epoch,
-            "metric": metric,
+            "logloss": log_loss,
+            'AUC' : val_auc
             }
             wandb.log(log_dict)
 
