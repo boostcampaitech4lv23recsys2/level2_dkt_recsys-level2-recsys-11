@@ -32,7 +32,8 @@ def main(args):
 
     print('------------------------load data------------------------')
     cate_cols, train_data, test_data = get_data(args)
-
+    # train_data columns select
+    
 
     print('check by cv in catboost:',args.cat_cv)
     if args.cat_cv:
@@ -100,7 +101,7 @@ def main(args):
         model.fit(X_train, y_train,
             eval_set=(X_valid, y_valid),
             cat_features=['userID'] + cate_cols,
-            # early_stopping_rounds= 10,
+            early_stopping_rounds= 50,
             use_best_model=True,
             )
 
@@ -144,11 +145,12 @@ def main(args):
         wandb.define_metric("metric", step_metric="epochs")
 
         for i in out.iter:
-            epoch, log_loss, val_auc = out.loc[i]
+            epoch, log_loss, val_auc, val_acc = out.loc[i]
             log_dict = {
             "epochs": epoch,
             "logloss": log_loss,
-            'AUC' : val_auc
+            'AUC' : val_auc,
+            'ACC' : val_acc,
             }
             wandb.log(log_dict)
 

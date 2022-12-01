@@ -23,15 +23,14 @@ def get_model(args):
     if model_name == 'CATB':
         model = ctb.CatBoostClassifier(
                                     eval_metric='Logloss',
-                                    custom_loss='AUC',
+                                    custom_loss=['AUC','Accuracy'],
                                     iterations=args.n_epochs,
-                                    depth=args.depth,
-                                    learning_rate=args.lr,
-                                    l2_leaf_reg=9,
-                                    verbose=args.verbose,
+                                    # learning_rate=args.lr,
+                                    # l2_leaf_reg=9,
+                                    # verbose=args.verbose,
                                     loss_function='Logloss', #사용자 지정 로스도 가능한 모양
-                                    od_type='IncToDec',
-                                    od_pval=args.od_pval,
-                                    od_wait=args.od_wait,
+                                    # od_type='IncToDec',
+                                    # od_pval=args.od_pval,
+                                    # od_wait=args.od_wait,
                                     )
     return model
