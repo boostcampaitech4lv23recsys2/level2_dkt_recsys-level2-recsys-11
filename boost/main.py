@@ -121,7 +121,7 @@ def main(args):
         plt.yticks(range(len(sorted_idx)), np.array(test_data.columns)[sorted_idx])
         plt.title('Feature Importance')
         plt.show()
-        plt.savefig('Test.png')
+        plt.savefig(f'{args.time_info}Test.png')
 
 
         # SAVE

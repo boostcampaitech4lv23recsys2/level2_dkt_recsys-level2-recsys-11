@@ -27,7 +27,7 @@ def get_model(args):
                                     iterations=args.n_epochs,
                                     depth=args.depth,
                                     learning_rate=args.lr,
-                                    l2_leaf_reg=5.0,
+                                    l2_leaf_reg=9,
                                     verbose=args.verbose,
                                     loss_function='Logloss', #사용자 지정 로스도 가능한 모양
                                     od_type='IncToDec',
