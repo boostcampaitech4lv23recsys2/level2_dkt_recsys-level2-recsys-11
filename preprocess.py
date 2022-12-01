@@ -1968,6 +1968,9 @@ class FE12(FeatureEngineer):
         train_df['Timestamp'] = pd.to_datetime(train_df['Timestamp'], format="%Y-%m-%d %H:%M:%S")
         test_df['Timestamp'] = pd.to_datetime(test_df['Timestamp'], format="%Y-%m-%d %H:%M:%S")
 
+        train_df['interaction'] = train_df.groupby(['userID','testId'])[['answerCode']].shift()['answerCode'].fillna(-1).astype(np.int16)
+        test_df['interaction'] = test_df.groupby(['userID','testId'])[['answerCode']].shift()['answerCode'].fillna(-1).astype(np.int16)
+
         diff = train_df.loc[:, ['userID','testId','Timestamp']].groupby(['userID','testId']).diff().fillna(pd.Timedelta(seconds=0))
         diff = diff['Timestamp'].apply(lambda x: x.total_seconds())
         train_df['elapsed'] = pd.concat([diff[1:], pd.Series([0.0])]).reset_index().iloc[:,1]  # 걸린 시간
@@ -2082,6 +2085,7 @@ class FE12(FeatureEngineer):
         # 카테고리 컬럼 끝 _c 붙여주세요.
         train_df = train_df.rename(columns=
             {
+                'interaction' : 'interaction_c',
                 'testId' : 'testId_c', # 기본 2
                 'user_grade' : 'user_grade_c',
                 'ass_grade' : 'ass_grade_c',
@@ -2090,6 +2094,7 @@ class FE12(FeatureEngineer):
         )
         test_df = test_df.rename(columns=
             {
+                'interaction' : 'interaction_c',
                 'testId' : 'testId_c', # 기본 2
                 'user_grade' : 'user_grade_c',
                 'ass_grade' : 'ass_grade_c',
