@@ -2104,7 +2104,7 @@ class FE12(FeatureEngineer):
         return train_df, test_df
 
 
-class FE13(FeatureEngineer):
+class FE14(FeatureEngineer):
     def __str__(self):
         return \
             """FE12 -> 전부 범주형으로"""
@@ -2183,7 +2183,19 @@ class FE13(FeatureEngineer):
         diff = test_df.loc[:, ['userID','testId','Timestamp']].groupby(['userID','testId']).diff().fillna(pd.Timedelta(seconds=0))
         diff = diff['Timestamp'].apply(lambda x: x.total_seconds())
         test_df['elapsed'] = pd.concat([diff[1:], pd.Series([0.0])]).reset_index().iloc[:,1]  # 걸린 시간        
-        
+
+        train_df['user_correct_answer'] = train_df.groupby('userID')['answerCode'].transform(lambda x: x.cumsum().shift(1)).fillna(0)
+        train_df['user_total_answer'] = train_df.groupby('userID')['answerCode'].cumcount().fillna(0)
+        train_df['user_acc'] = (train_df['user_correct_answer']/train_df['user_total_answer']).fillna(0)
+
+        test_df['user_correct_answer'] = test_df.groupby('userID')['answerCode'].transform(lambda x: x.cumsum().shift(1)).fillna(0)
+        test_df['user_total_answer'] = test_df.groupby('userID')['answerCode'].cumcount().fillna(0)
+        test_df['user_acc'] = (test_df['user_correct_answer']/test_df['user_total_answer']).fillna(0)
+
+        # numeric_col.append('user_acc')
+        # train_df.drop(['user_correct_answer', 'user_total_answer'], axis=1)
+        # test_df.drop(['user_correct_answer', 'user_total_answer'], axis=1)
+
         #### 2. test_df 에서 test_tmp, test_last_sequence 떼어내기 ####
         # - test_tmp : not -1
         # - test_last_sequence : only -1
@@ -2381,7 +2393,7 @@ def main():
     # FE10(BASE_DATA_PATH, base_train_df, base_test_df).run()
     # FE11(BASE_DATA_PATH, base_train_df, base_test_df).run()
     # FE12(BASE_DATA_PATH, base_train_df, base_test_df).run()
-    FE13(BASE_DATA_PATH, base_train_df, base_test_df).run()
+    FE14(BASE_DATA_PATH, base_train_df, base_test_df).run()
 
 if __name__=='__main__':
     main()
