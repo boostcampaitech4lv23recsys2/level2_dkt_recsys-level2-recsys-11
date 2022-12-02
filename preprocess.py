@@ -2212,6 +2212,11 @@ class FE13(FeatureEngineer):
         merged['user_grade'] = merged['userID'].map(stu_groupby_merged['user_grade']) # merged mapping
         test_tmp['user_grade'] = test_tmp['userID'].map(stu_groupby_merged['user_grade']) # test_tmp mapping
         test_last_sequence['user_grade'] = test_last_sequence['userID'].map(stu_groupby_merged['user_grade']) # test_last_sequence mapping
+        
+        stu_groupby_merged['user_mean'] = stu_groupby_merged['meanAnswerRate'].apply(cate_map) # 유저의 평균 정답률로 10개 범주화
+        merged['user_mean'] = merged['userID'].map(stu_groupby_merged['user_mean']) # merged mapping
+        test_tmp['user_mean'] = test_tmp['userID'].map(stu_groupby_merged['user_mean']) # test_tmp mapping
+        test_last_sequence['user_mean'] = test_last_sequence['userID'].map(stu_groupby_merged['user_mean']) # test_last_sequence mapping
 
         ## 2. prob_groupby : assessmentItemID 이용한 FE ## 
         prob_groupby = merged.groupby('assessmentItemID').agg({
@@ -2224,24 +2229,44 @@ class FE13(FeatureEngineer):
         test_tmp['ass_grade'] = test_tmp['assessmentItemID'].map(prob_groupby['ass_grade']) # test_tmp mapping
         test_last_sequence['ass_grade'] = test_last_sequence['assessmentItemID'].map(prob_groupby['ass_grade']) # test_last_sequence mapping
 
+        prob_groupby['ass_mean'] = prob_groupby['meanAnswerRate'].apply(cate_map) # 문제 평균 정답률을 이용한 난이도 정의
+        merged['ass_mean'] = merged['assessmentItemID'].map(prob_groupby['ass_mean']) # merged mapping
+        test_tmp['ass_mean'] = test_tmp['assessmentItemID'].map(prob_groupby['ass_mean']) # test_tmp mapping
+        test_last_sequence['ass_mean'] = test_last_sequence['assessmentItemID'].map(prob_groupby['ass_mean']) # test_last_sequence mapping
         
-        # 시험지의 각 문항 별 평균 정답률
-        asses_mean = merged.groupby('assessmentItemID')['answerCode'].mean()
-        merged['asses_mean'] = merged['assessmentItemID'].map(asses_mean)
-        merged['asses_mean'] = merged['asses_mean'].apply(cate_map) # 0-10 범주화
-        test_last_sequence['asses_mean'] = test_last_sequence['assessmentItemID'].map(asses_mean)
-        test_last_sequence['asses_mean'] = test_last_sequence['asses_mean'].apply(cate_map)
-        test_tmp['asses_mean'] = test_tmp['assessmentItemID'].map(asses_mean)
-        test_tmp['asses_mean'] = test_tmp['asses_mean'].apply(cate_map)
+        # # 시험지의 각 문항 별 평균 정답률
+        # asses_mean = merged.groupby('assessmentItemID')['answerCode'].mean()
+        # merged['asses_mean'] = merged['assessmentItemID'].map(asses_mean)
+        # merged['asses_mean'] = merged['asses_mean'].apply(cate_map) # 0-10 범주화
+        # test_last_sequence['asses_mean'] = test_last_sequence['assessmentItemID'].map(asses_mean)
+        # test_last_sequence['asses_mean'] = test_last_sequence['asses_mean'].apply(cate_map)
+        # test_tmp['asses_mean'] = test_tmp['assessmentItemID'].map(asses_mean)
+        # test_tmp['asses_mean'] = test_tmp['asses_mean'].apply(cate_map)
+        
+        ## 2. prob_groupby : assessmentItemID 이용한 FE ## 
+        test_groupby = merged.groupby('testId').agg({
+            'userID': 'count',
+            'answerCode': percentile
+        })
+        test_groupby.columns = ['numUsers', 'meanAnswerRate'] # groupby 집계, numUsers : 문제를 푼 유저는 몇명인지
+        test_groupby['test_grade'] = test_groupby['meanAnswerRate'].apply(grade_map) # 문제 평균 정답률을 이용한 난이도 정의
+        merged['test_grade'] = merged['testId'].map(test_groupby['test_grade']) # merged mapping
+        test_tmp['test_grade'] = test_tmp['testId'].map(test_groupby['test_grade']) # test_tmp mapping
+        test_last_sequence['test_grade'] = test_last_sequence['testId'].map(test_groupby['test_grade']) # test_last_sequence mapping
 
-        # 시험지별 평균 정답률
-        test_mean = merged.groupby('testId')['answerCode'].mean()
-        merged['test_mean'] = merged['testId'].map(test_mean)
-        merged['test_mean'] = merged['test_mean'].apply(cate_map)
-        test_last_sequence['test_mean'] = test_last_sequence['assessmentItemID'].map(test_mean)
-        test_last_sequence['test_mean'] = test_last_sequence['test_mean'].apply(cate_map)
-        test_tmp['test_mean'] = test_tmp['assessmentItemID'].map(test_mean)
-        test_tmp['test_mean'] = test_tmp['test_mean'].apply(cate_map)
+        test_groupby['test_mean'] = test_groupby['meanAnswerRate'].apply(cate_map) # 문제 평균 정답률을 이용한 난이도 정의
+        merged['test_mean'] = merged['testId'].map(test_groupby['test_mean']) # merged mapping
+        test_tmp['test_mean'] = test_tmp['testId'].map(test_groupby['test_mean']) # test_tmp mapping
+        test_last_sequence['test_mean'] = test_last_sequence['testId'].map(test_groupby['test_mean']) # test_last_sequence mapping
+
+        # # 시험지별 평균 정답률
+        # test_mean = merged.groupby('testId')['answerCode'].mean()
+        # merged['test_mean'] = merged['testId'].map(test_mean)
+        # merged['test_mean'] = merged['test_mean'].apply(cate_map)
+        # test_last_sequence['test_mean'] = test_last_sequence['assessmentItemID'].map(test_mean)
+        # test_last_sequence['test_mean'] = test_last_sequence['test_mean'].apply(cate_map)
+        # test_tmp['test_mean'] = test_tmp['assessmentItemID'].map(test_mean)
+        # test_tmp['test_mean'] = test_tmp['test_mean'].apply(cate_map)
 
         # FE04 에서 maxprob feature 추가하는 방법 참고
         # 각 시험 속 문항번호를 수치형으로 만들어 추가한다.
@@ -2300,18 +2325,21 @@ class FE13(FeatureEngineer):
         merged[numeric_col] = scaler.transform(merged[numeric_col])
         test_df[numeric_col] = scaler.transform(test_df[numeric_col])
         
-        merged.drop(['assessmentItemID', 'KnowledgeTag', 'testId', 'counts'],axis=1, inplace=True)
-        test_df.drop(['assessmentItemID', 'KnowledgeTag', 'testId', 'counts'],axis=1, inplace=True)
+        merged.drop(['userID', 'assessmentItemID', 'KnowledgeTag', 'testId', 'counts'],axis=1, inplace=True)
+        test_df.drop(['userID', 'assessmentItemID', 'KnowledgeTag', 'testId', 'counts'],axis=1, inplace=True)
         # data leakage 허용 : merged가 train data 의 역할을 하자
         train_df = merged
         # 카테고리 컬럼 끝 _c 붙여주세요.
         train_df = train_df.rename(columns=
             {
                 'interaction' : 'interaction_c',
-                'asses_mean' : 'asses_mean_c',
+                'user_grade' : 'user_grade_c',
+                'user_mean' : 'user_mean_c',
+                'ass_grade' : 'ass_grade_c',
+                'ass_mean' : 'ass_mean_c',
+                'test_grade' : 'test_grade_c',
                 'test_mean' : 'test_mean_c',
                 'maxprob' : 'maxprob_c',
-                'user_grade' : 'user_grade_c',
                 'ass_grade' : 'ass_grade_c',
                 'mark_randomly' : 'mark_randomly_c'
             }
@@ -2319,10 +2347,13 @@ class FE13(FeatureEngineer):
         test_df = test_df.rename(columns=
             {
                 'interaction' : 'interaction_c',
-                'asses_mean' : 'asses_mean_c',
+                'user_grade' : 'user_grade_c',
+                'user_mean' : 'user_mean_c',
+                'ass_grade' : 'ass_grade_c',
+                'ass_mean' : 'ass_mean_c',
+                'test_grade' : 'test_grade_c',
                 'test_mean' : 'test_mean_c',
                 'maxprob' : 'maxprob_c',
-                'user_grade' : 'user_grade_c',
                 'ass_grade' : 'ass_grade_c',
                 'mark_randomly' : 'mark_randomly_c'
             }
