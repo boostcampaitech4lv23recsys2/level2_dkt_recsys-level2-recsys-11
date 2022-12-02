@@ -2230,7 +2230,7 @@ class FE13(FeatureEngineer):
         merged['asses_mean'] = merged['assessmentItemID'].map(asses_mean)
         merged['asses_mean'] = merged['asses_mean'].apply(cate_map) # 0-10 범주화
         test_last_sequence['asses_mean'] = test_last_sequence['assessmentItemID'].map(asses_mean)
-        test_last_sequence['assess_mean'] = test_last_sequence['asses_mean'].apply(cate_map)
+        test_last_sequence['asses_mean'] = test_last_sequence['asses_mean'].apply(cate_map)
         test_tmp['asses_mean'] = test_tmp['assessmentItemID'].map(asses_mean)
         test_tmp['asses_mean'] = test_tmp['asses_mean'].apply(cate_map)
 
@@ -2285,8 +2285,9 @@ class FE13(FeatureEngineer):
 
         # - 이제 elapsed가 잘 대치 되어있기 때문에, mark_randomly feature를 만들 수 있다.
         merged['mark_randomly'] = merged['elapsed'].apply(lambda x: int((x>0) & (x<=5)))     # 걸린 시간이 1초에서 5초 사이는 평균 정답률이 너무 낮아서 찍은 걸로 간주
+        test_df['elapsed'] = test_df['elapsed'].apply(lambda x : 900 if x > 900 else x)
         test_df['mark_randomly'] = test_df['elapsed'].apply(lambda x: int((x>0) & (x<=5)))     # 걸린 시간이 1초에서 5초 사이는 평균 정답률이 너무 낮아서 찍은 걸로 간주
-
+        
         # elapsed로 구간 범주화
         merged['elapsed_c'] = merged['elapsed'].apply(elpased_map)
         test_df['elapsed_c'] = test_df['elapsed'].apply(elpased_map)
