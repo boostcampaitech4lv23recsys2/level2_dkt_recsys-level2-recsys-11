@@ -2420,6 +2420,20 @@ class FE14(FeatureEngineer):
                 return 9
             elif x <= 900.0:
                 return 10
+        
+        def cumacc_map(x:float):
+            if x <= 0.5:
+                return 0
+            elif x <= 0.6:
+                return 1
+            elif x <= 0.7:
+                return 2
+            elif x <= 0.8:
+                return 3
+            elif x <= 0.9:
+                return 4
+            elif x <= 1.0:
+                return 5
 
         numeric_col = []
 
@@ -2443,10 +2457,14 @@ class FE14(FeatureEngineer):
         train_df['user_correct_answer'] = train_df.groupby('userID')['answerCode'].transform(lambda x: x.cumsum().shift(1)).fillna(0)
         train_df['user_total_answer'] = train_df.groupby('userID')['answerCode'].cumcount().fillna(0)
         train_df['user_acc'] = (train_df['user_correct_answer']/train_df['user_total_answer']).fillna(0)
+        train_df['user_acc_c'] = train_df['user_acc'].apply(cumacc_map)
 
         test_df['user_correct_answer'] = test_df.groupby('userID')['answerCode'].transform(lambda x: x.cumsum().shift(1)).fillna(0)
         test_df['user_total_answer'] = test_df.groupby('userID')['answerCode'].cumcount().fillna(0)
         test_df['user_acc'] = (test_df['user_correct_answer']/test_df['user_total_answer']).fillna(0)
+        test_df['user_acc_c'] = test_df['user_acc'].apply(cumacc_map)
+
+
 
         # numeric_col.append('user_acc')
         # train_df.drop(['user_correct_answer', 'user_total_answer'], axis=1)
