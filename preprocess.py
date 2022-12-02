@@ -2325,8 +2325,8 @@ class FE13(FeatureEngineer):
         merged[numeric_col] = scaler.transform(merged[numeric_col])
         test_df[numeric_col] = scaler.transform(test_df[numeric_col])
         
-        merged.drop(['userID', 'assessmentItemID', 'KnowledgeTag', 'testId', 'counts'],axis=1, inplace=True)
-        test_df.drop(['userID', 'assessmentItemID', 'KnowledgeTag', 'testId', 'counts'],axis=1, inplace=True)
+        merged.drop(['assessmentItemID', 'KnowledgeTag', 'testId', 'counts'],axis=1, inplace=True)
+        test_df.drop(['assessmentItemID', 'KnowledgeTag', 'testId', 'counts'],axis=1, inplace=True)
         # data leakage 허용 : merged가 train data 의 역할을 하자
         train_df = merged
         # 카테고리 컬럼 끝 _c 붙여주세요.
